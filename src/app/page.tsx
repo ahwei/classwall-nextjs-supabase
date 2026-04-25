@@ -1,64 +1,126 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+import { QuestionCard } from "@/components/question-card";
+import { QuestionForm } from "@/components/question-form";
+import { supabase } from "@/lib/supabase";
+import type { Question } from "@/types/database";
+
+function sortQuestions(list: Question[]) {
+  return [...list].sort((a, b) => {
+    if (b.likes !== a.likes) return b.likes - a.likes;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+}
 
 export default function Home() {
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      const { data, error: fetchError } = await supabase
+        .from("questions")
+        .select("*")
+        .order("likes", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      if (cancelled) return;
+      if (fetchError) {
+        setError(fetchError.message);
+      } else {
+        setQuestions(data ?? []);
+      }
+      setLoading(false);
+    }
+
+    load();
+
+    const channel = supabase
+      .channel("questions-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "questions" },
+        (payload) => {
+          const next = payload.new as Question;
+          setQuestions((prev) =>
+            prev.some((q) => q.id === next.id)
+              ? prev
+              : sortQuestions([next, ...prev])
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "questions" },
+        (payload) => {
+          const next = payload.new as Question;
+          setQuestions((prev) =>
+            sortQuestions(prev.map((q) => (q.id === next.id ? next : q)))
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "questions" },
+        (payload) => {
+          const old = payload.old as Pick<Question, "id">;
+          setQuestions((prev) => prev.filter((q) => q.id !== old.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const totalLikes = useMemo(
+    () => questions.reduce((sum, q) => sum + q.likes, 0),
+    [questions]
+  );
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-linear-to-b from-background to-muted/30">
+      <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-16">
+        <header className="flex flex-col gap-2 text-center">
+          <h1 className="bg-linear-to-r from-fuchsia-500 via-pink-500 to-amber-500 bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
+            🎯 ClassWall 問答牆
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-sm text-muted-foreground sm:text-base">
+            匿名發問、即時更新、按讚衝榜。共 {questions.length} 題 ·{" "}
+            {totalLikes} 個 +1
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        </header>
+
+        <section aria-label="發問區">
+          <QuestionForm />
+        </section>
+
+        <section aria-label="問題列表" className="flex flex-col gap-3">
+          {loading ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">
+              載入中...
+            </p>
+          ) : error ? (
+            <p className="py-12 text-center text-sm text-destructive">
+              讀取失敗：{error}
+            </p>
+          ) : questions.length === 0 ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">
+              還沒有人發問，你來當第一個！
+            </p>
+          ) : (
+            questions.map((question) => (
+              <QuestionCard key={question.id} question={question} />
+            ))
+          )}
+        </section>
       </main>
     </div>
   );
