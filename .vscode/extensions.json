@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "GitHub.copilot",
+    "GitHub.copilot-chat",
+    "bradlc.vscode-tailwindcss",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "Supabase.vscode-supabase-extension",
+    "EditorConfig.EditorConfig"
+  ]
+}
