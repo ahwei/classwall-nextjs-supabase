@@ -10,6 +10,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 5 小時「AI 程式開發實戰」課程的成品 starter。教學用途優先：**程式碼要好讀、好拆解、好用 Copilot 改造**。
 
+> 給 GitHub Copilot 學生使用者：等價規則放在 `.github/copilot-instructions.md` 與 `.github/instructions/`。兩邊內容若不一致，**以本檔為準**（source of truth）。
+
 ## Tech stack
 
 - Next.js 16 (App Router) + React 19
@@ -37,25 +39,30 @@ supabase/migrations/0001_init.sql   schema + RLS + Realtime + seed
 ## Conventions
 
 ### Tailwind v4
+
 - 用 `bg-linear-to-r` **不要**用 `bg-gradient-to-r`（v4 已改名）
 - Theme tokens 在 `src/app/globals.css` 的 `@theme inline {}` + `:root {}`
 - 加新色票：在 `:root`/`.dark` 補 `--xxx`，再到 `@theme inline` 加 `--color-xxx: var(--xxx)`
 
 ### Server vs Client components
+
 - 預設是 Server Component；用到 `useState` / `useEffect` / event handler 必須在檔案頂寫 `"use client"`
 - Supabase client（`src/lib/supabase.ts`）目前是 browser-only：在 Server Component import 它**不會** throw（會用 placeholder URL），但實際呼叫會失敗。要在 Server 端用就改成 server client 模式。
 
 ### Supabase
+
 - 表名：`questions`、`answers`（schema 定義在 `supabase/migrations/0001_init.sql`）
 - RLS 政策只允許 anonymous SELECT / INSERT / UPDATE likes — 加新欄位/表時記得更新 RLS
 - Realtime publication 已加 `questions`、`answers` 兩張表
 - 新增資料表流程：寫新的 migration `0002_xxx.sql`（不要改舊的）+ 學生需在 Supabase SQL Editor 重跑
 
 ### shadcn 元件
+
 - 加新元件：`npx shadcn@latest add <name>`，會放到 `src/components/ui/`
 - 風格 preset 是 `base-nova`，**不要**手動修改 `components.json` 的 style 欄位
 
 ### Code style
+
 - 註解用繁體中文（教學受眾），但變數名/函式名用英文
 - Prettier: `semi: true, singleQuote: false, printWidth: 80`
 - 寫 `useEffect` 時務必加 cleanup（特別是 Supabase channel `removeChannel`）
@@ -72,13 +79,13 @@ supabase/migrations/0001_init.sql   schema + RLS + Realtime + seed
 
 ## Common tasks
 
-| 想做什麼 | 怎麼做 |
-|---|---|
-| 加新 shadcn 元件 | `npx shadcn@latest add <name>` |
-| 加新環境變數 | 同步更新 `.env.example` + README troubleshooting + Vercel 設定提醒 |
-| 改 schema | 新建 `supabase/migrations/000N_xxx.sql`，README troubleshooting 加說明 |
-| 加新頁面 | `src/app/<route>/page.tsx`，用到 hooks 記得 `"use client"` |
-| 跑驗證 | `npm run lint && npm run format:check && npm run build` |
+| 想做什麼         | 怎麼做                                                                 |
+| ---------------- | ---------------------------------------------------------------------- |
+| 加新 shadcn 元件 | `npx shadcn@latest add <name>`                                         |
+| 加新環境變數     | 同步更新 `.env.example` + README troubleshooting + Vercel 設定提醒     |
+| 改 schema        | 新建 `supabase/migrations/000N_xxx.sql`，README troubleshooting 加說明 |
+| 加新頁面         | `src/app/<route>/page.tsx`，用到 hooks 記得 `"use client"`             |
+| 跑驗證           | `npm run lint && npm run format:check && npm run build`                |
 
 ## Verification before commit
 

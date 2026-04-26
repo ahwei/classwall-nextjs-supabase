@@ -32,16 +32,19 @@
 對照 Notion 子頁面：
 
 ### 📖 基礎知識
+
 - [前言](https://www.notion.so/2fdad1e3133680eeb434f8ef4aa390df)
 - [課前準備](https://www.notion.so/34aad1e313368104b9dedf9edc39f681) — 註冊 GitHub / Supabase / Vercel、安裝 Node、Git、VS Code + Copilot
 - [今天要做什麼：ClassWall 匿名問答牆](https://www.notion.so/ClassWall-34aad1e313368112bd65f911e5e881da)
 
 ### 🧱 核心工具
+
 - [Git 教學](https://www.notion.so/Git-2fdad1e3133680448352c0749d5a579d)
 - [AI 開發基本知識](https://www.notion.so/AI-2fdad1e3133680b58451eed065a63200)
 - [開發工具介紹](https://www.notion.so/34aad1e31336816309e92cfac4b4e12c0)
 
 ### 🚀 實戰演練：從 0 到上線
+
 - [Step 1：建立 GitHub Repo](https://www.notion.so/34aad1e31336816409ee2e0bec0dde993) — _本 starter 已建好；學生用 Use this template 取代_
 - [Step 2：Supabase 建資料庫](https://www.notion.so/Step-2-Supabase-34aad1e3133681378631d3d180f37c13) — _跑 `supabase/migrations/0001_init.sql`_
 - [Step 3：Next.js 專案啟動 + Copilot 實戰](https://www.notion.so/34aad1e31336818c8126f69176ea4896) — _本 starter 已 init；學生改用「Copilot 拆解現成程式碼」_
@@ -50,6 +53,7 @@
 - [Step 6：部署到 Vercel](https://www.notion.so/34aad1e31336815509aacf0dd576d6de7)
 
 ### 🎓 總結與延伸
+
 - [課後挑戰 & 延伸](https://www.notion.so/34aad1e3133681019944cf942c5c75a0)
 
 ---
@@ -171,6 +175,36 @@ npm run lint          # ESLint
 npm run format        # Prettier 自動格式化
 npm run format:check  # 檢查格式
 ```
+
+---
+
+## 🤖 GitHub Copilot 用法
+
+這個 repo 預先設好 Copilot 規則，clone 下來打開 VS Code（≥ 1.95）就能用：
+
+- **Repo-wide 規範**：`.github/copilot-instructions.md` 會自動附加到每次 Copilot Chat 請求（會教 Copilot 用 Tailwind v4 的 `bg-linear-*`、Supabase RLS、shadcn 規範等）
+- **路徑特化規則**：`.github/instructions/*.instructions.md` 在你編輯特定路徑時自動套用
+  - `tailwind.instructions.md` → 改 `*.tsx` / `*.css` 時生效
+  - `supabase.instructions.md` → 改 `src/lib/supabase.ts` / Supabase 相關檔時生效
+  - `components.instructions.md` → 改 `src/components/**` 時生效
+  - `migrations.instructions.md` → 改 `supabase/migrations/**` 時生效
+- **預先寫好的 slash prompt**（在 Copilot Chat 輸入 `/`）：
+  - `/add-shadcn` — 加 shadcn 元件
+  - `/add-page` — 加新頁面
+  - `/add-migration` — 加 Supabase migration
+  - `/add-feature-likes-rank` — 課後挑戰：本週熱門排行榜
+  - `/fix-copilot-suggestion` — 對照專案規範重新檢查 Copilot 給的程式碼
+
+### 確認 Copilot 有讀到 instructions
+
+問 Copilot Chat「幫我加一個 input 元件到問答表單」——如果回應提到 `npx shadcn@latest add input`，代表 instructions 有生效。如果回應自己寫 `<input className="...">`，請到 VS Code 設定確認：
+
+- `github.copilot.chat.codeGeneration.useInstructionFiles: true`
+- `chat.promptFiles: true`
+
+（這兩個 key 已經寫在 `.vscode/settings.json`，用 VS Code ≥ 1.95 開啟才會生效）
+
+> ⚠️ **GitHub.com 網頁版 Copilot**（PR review、Coding Agent）只會讀 `.github/copilot-instructions.md`，**不會**處理 `.github/instructions/*.instructions.md` 的 `applyTo` glob——路徑特化規則僅在 VS Code / JetBrains 編輯器內生效。
 
 ---
 
