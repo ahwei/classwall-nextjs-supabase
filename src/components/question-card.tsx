@@ -146,6 +146,7 @@ function QuestionCardImpl({ question }: Props) {
 
         <time
           dateTime={question.created_at}
+          aria-label={new Date(question.created_at).toLocaleString("zh-TW")}
           className="mb-2 block text-xs text-muted-foreground/70"
         >
           {formatRelativeTime(question.created_at)}
