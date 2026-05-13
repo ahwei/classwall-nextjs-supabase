@@ -17,10 +17,9 @@ const MINUTE_MS = 60_000;
 const HOUR_MINUTES = 60;
 const DAY_HOURS = 24;
 
-function formatRelativeTime(createdAt: string) {
-  const createdAtDate = new Date(createdAt);
+function formatRelativeTime(createdAtDate: Date) {
   const createdAtTime = createdAtDate.getTime();
-  if (Number.isNaN(createdAtTime)) return "剛剛";
+  if (isNaN(createdAtTime)) return "剛剛";
 
   const diffMs = Date.now() - createdAtTime;
   if (diffMs < 0) return "剛剛";
@@ -54,6 +53,11 @@ function QuestionCardImpl({ question }: Props) {
   const [burstKey, setBurstKey] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const isHot = question.likes >= 5;
+  const createdAtDate = new Date(question.created_at);
+  const relativeTime = formatRelativeTime(createdAtDate);
+  const createdAtAriaLabel = isNaN(createdAtDate.getTime())
+    ? question.created_at
+    : createdAtDate.toLocaleString("zh-TW");
 
   // 3D tilt：用 ref 直接寫 DOM，完全不經過 React render
   // 內層 wrapper 專門承載 tilt transform；外層 motion.article 負責 layout 動畫
@@ -146,10 +150,10 @@ function QuestionCardImpl({ question }: Props) {
 
         <time
           dateTime={question.created_at}
-          aria-label={new Date(question.created_at).toLocaleString("zh-TW")}
+          aria-label={createdAtAriaLabel}
           className="mb-2 block text-xs text-muted-foreground/70"
         >
-          {formatRelativeTime(question.created_at)}
+          {relativeTime}
         </time>
 
         <p
