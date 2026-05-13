@@ -19,6 +19,7 @@ function formatRelativeTime(createdAt: string) {
   if (Number.isNaN(createdAtTime)) return "剛剛";
 
   const diffMs = Date.now() - createdAtTime;
+  if (diffMs < 0) return "剛剛";
   if (diffMs < 60_000) return "剛剛";
 
   const diffMinutes = Math.floor(diffMs / 60_000);
