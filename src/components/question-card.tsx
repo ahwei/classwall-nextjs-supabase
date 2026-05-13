@@ -1,8 +1,9 @@
 "use client";
 
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { memo, useEffect, useRef, useState } from "react";
 
+import { AnswerSection } from "@/components/answer-section";
 import { addLiked, hasLiked } from "@/lib/liked-store";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ function QuestionCardImpl({ question }: Props) {
   const [pending, setPending] = useState(false);
   const [alreadyLiked, setAlreadyLiked] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
+  const [expanded, setExpanded] = useState(false);
   const isHot = question.likes >= 5;
 
   // 3D tilt：用 ref 直接寫 DOM，完全不經過 React render
@@ -141,15 +143,42 @@ function QuestionCardImpl({ question }: Props) {
           {question.content}
         </p>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <span className="text-[11px] uppercase tracking-wider text-muted-foreground/80">
-            {new Date(question.created_at).toLocaleString("zh-TW", {
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </span>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground/80">
+              {new Date(question.created_at).toLocaleString("zh-TW", {
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+            <motion.button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              whileTap={{ scale: 0.95 }}
+              className={cn(
+                "inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 py-2",
+                "text-sm font-medium transition-colors duration-200",
+                "border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                expanded
+                  ? "border-primary/60 bg-primary/10 text-primary"
+                  : "border-border bg-card hover:border-primary/60 hover:bg-primary/10 hover:text-primary"
+              )}
+            >
+              <span aria-hidden>💬</span>
+              <span>{expanded ? "收起" : "回答"}</span>
+              <motion.span
+                aria-hidden
+                animate={{ rotate: expanded ? 180 : 0 }}
+                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                className="inline-block text-xs leading-none"
+              >
+                ▾
+              </motion.span>
+            </motion.button>
+          </div>
 
           <div className="relative">
             {/* 粒子噴發層（按讚瞬間） */}
@@ -219,6 +248,23 @@ function QuestionCardImpl({ question }: Props) {
             </motion.button>
           </div>
         </div>
+
+        {/* 回答區塊：展開時才 mount（同時觸發 lazy load + realtime 訂閱） */}
+        <AnimatePresence initial={false}>
+          {expanded ? (
+            <motion.div
+              key="answers"
+              layout
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              className="overflow-hidden"
+            >
+              <AnswerSection questionId={question.id} />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
     </motion.article>
   );
