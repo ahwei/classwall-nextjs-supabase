@@ -13,6 +13,10 @@ type Props = {
   question: Question;
 };
 
+const MINUTE_MS = 60_000;
+const HOUR_MINUTES = 60;
+const DAY_HOURS = 24;
+
 function formatRelativeTime(createdAt: string) {
   const createdAtDate = new Date(createdAt);
   const createdAtTime = createdAtDate.getTime();
@@ -20,16 +24,16 @@ function formatRelativeTime(createdAt: string) {
 
   const diffMs = Date.now() - createdAtTime;
   if (diffMs < 0) return "剛剛";
-  if (diffMs < 60_000) return "剛剛";
+  if (diffMs < MINUTE_MS) return "剛剛";
 
-  const diffMinutes = Math.floor(diffMs / 60_000);
-  if (diffMinutes < 60) return `${diffMinutes} 分鐘前`;
+  const diffMinutes = Math.floor(diffMs / MINUTE_MS);
+  if (diffMinutes < HOUR_MINUTES) return `${diffMinutes} 分鐘前`;
 
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} 小時前`;
-  if (diffHours < 48) return "昨天";
+  const diffHours = Math.floor(diffMinutes / HOUR_MINUTES);
+  if (diffHours < DAY_HOURS) return `${diffHours} 小時前`;
+  if (diffHours < DAY_HOURS * 2) return "昨天";
 
-  const diffDays = Math.floor(diffHours / 24);
+  const diffDays = Math.floor(diffHours / DAY_HOURS);
   return `${diffDays} 天前`;
 }
 
@@ -140,9 +144,12 @@ function QuestionCardImpl({ question }: Props) {
           />
         ) : null}
 
-        <p className="mb-2 text-xs text-muted-foreground/70">
+        <time
+          dateTime={question.created_at}
+          className="mb-2 block text-xs text-muted-foreground/70"
+        >
           {formatRelativeTime(question.created_at)}
-        </p>
+        </time>
 
         <p
           className={cn(
