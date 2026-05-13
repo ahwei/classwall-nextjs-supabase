@@ -298,12 +298,13 @@
 }
 
 /* 🔥 熱門文字暖光 — 用 text-shadow 模擬 shimmer，避免 background-clip:text 在
-   transform 祖先下崩掉導致整段文字消失 */
+   transform 祖先下崩掉導致整段文字消失。blur 半徑控制在 8px 以下，
+   降低 paint cost（>50 題滾動時不會卡） */
 .hot-shimmer {
   color: var(--foreground);
   text-shadow:
     0 0 1px color-mix(in oklch, var(--primary) 35%, transparent),
-    0 0 18px color-mix(in oklch, var(--primary) 22%, transparent);
+    0 0 8px color-mix(in oklch, var(--primary) 22%, transparent);
 }
 
 /* 滑鼠跟隨光暈（page 用，依 mouse-x / mouse-y CSS var 變動） */
