@@ -13,6 +13,29 @@ type Props = {
   question: Question;
 };
 
+const MINUTE_MS = 60_000;
+const HOUR_MINUTES = 60;
+const DAY_HOURS = 24;
+
+function formatRelativeTime(createdAtDate: Date) {
+  const createdAtTime = createdAtDate.getTime();
+  if (isNaN(createdAtTime)) return "剛剛";
+
+  const diffMs = Date.now() - createdAtTime;
+  if (diffMs < 0) return "剛剛";
+  if (diffMs < MINUTE_MS) return "剛剛";
+
+  const diffMinutes = Math.floor(diffMs / MINUTE_MS);
+  if (diffMinutes < HOUR_MINUTES) return `${diffMinutes} 分鐘前`;
+
+  const diffHours = Math.floor(diffMinutes / HOUR_MINUTES);
+  if (diffHours < DAY_HOURS) return `${diffHours} 小時前`;
+  if (diffHours < DAY_HOURS * 2) return "昨天";
+
+  const diffDays = Math.floor(diffHours / DAY_HOURS);
+  return `${diffDays} 天前`;
+}
+
 // 按讚瞬間的粒子噴發角度
 const PARTICLES = Array.from({ length: 12 }, (_, i) => {
   const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.4;
@@ -30,6 +53,11 @@ function QuestionCardImpl({ question }: Props) {
   const [burstKey, setBurstKey] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const isHot = question.likes >= 5;
+  const createdAtDate = new Date(question.created_at);
+  const relativeTime = formatRelativeTime(createdAtDate);
+  const createdAtAriaLabel = isNaN(createdAtDate.getTime())
+    ? question.created_at
+    : createdAtDate.toLocaleString("zh-TW");
 
   // 3D tilt：用 ref 直接寫 DOM，完全不經過 React render
   // 內層 wrapper 專門承載 tilt transform；外層 motion.article 負責 layout 動畫
@@ -120,6 +148,14 @@ function QuestionCardImpl({ question }: Props) {
           />
         ) : null}
 
+        <time
+          dateTime={question.created_at}
+          aria-label={createdAtAriaLabel}
+          className="mb-2 block text-xs text-muted-foreground/70"
+        >
+          {relativeTime}
+        </time>
+
         <p
           className={cn(
             "whitespace-pre-wrap text-[15px] leading-[1.75] sm:text-base",
@@ -145,14 +181,6 @@ function QuestionCardImpl({ question }: Props) {
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="text-[11px] uppercase tracking-wider text-muted-foreground/80">
-              {new Date(question.created_at).toLocaleString("zh-TW", {
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
             <motion.button
               type="button"
               onClick={() => setExpanded((v) => !v)}
