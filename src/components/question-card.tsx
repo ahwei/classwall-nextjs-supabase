@@ -13,6 +13,25 @@ type Props = {
   question: Question;
 };
 
+function formatRelativeTime(createdAt: string) {
+  const createdAtDate = new Date(createdAt);
+  const createdAtTime = createdAtDate.getTime();
+  if (Number.isNaN(createdAtTime)) return "剛剛";
+
+  const diffMs = Date.now() - createdAtTime;
+  if (diffMs < 60_000) return "剛剛";
+
+  const diffMinutes = Math.floor(diffMs / 60_000);
+  if (diffMinutes < 60) return `${diffMinutes} 分鐘前`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} 小時前`;
+  if (diffHours < 48) return "昨天";
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} 天前`;
+}
+
 // 按讚瞬間的粒子噴發角度
 const PARTICLES = Array.from({ length: 12 }, (_, i) => {
   const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.4;
@@ -120,6 +139,10 @@ function QuestionCardImpl({ question }: Props) {
           />
         ) : null}
 
+        <p className="mb-2 text-xs text-muted-foreground/70">
+          {formatRelativeTime(question.created_at)}
+        </p>
+
         <p
           className={cn(
             "whitespace-pre-wrap text-[15px] leading-[1.75] sm:text-base",
@@ -145,14 +168,6 @@ function QuestionCardImpl({ question }: Props) {
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="text-[11px] uppercase tracking-wider text-muted-foreground/80">
-              {new Date(question.created_at).toLocaleString("zh-TW", {
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
             <motion.button
               type="button"
               onClick={() => setExpanded((v) => !v)}
